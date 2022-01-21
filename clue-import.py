@@ -81,9 +81,9 @@ def add_entry_to_cycle(entry, cycle, cycles):
     if len(cycle) == 0 or not is_period(entry):
         cycle.append(entry)
     else:
-        # add entry to current cycle if dates adjacent
-        last_entry = get_last_period_entry_in_cycle(cycle) # returns last period day in current cycle
-        if (last_entry["day"] == entry["day"] - datetime.timedelta(days=1) or last_entry["day"] == entry["day"] - datetime.timedelta(days=2)):
+        # add entry to current cycle if 5 days or less since last period day in current cycle
+        last_entry = get_last_period_entry_in_cycle(cycle)
+        if (entry["day"] <= last_entry["day"] + datetime.timedelta(days=5)):
             cycle.append(entry)
         else:
             # add to new cycle if there's a gap of more than 1 day

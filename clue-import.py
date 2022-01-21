@@ -8,6 +8,20 @@ from os.path import exists
 Program expects 1 argument: the path to the json data file, extracted from clue app, i.e.:
     > python3 clue-import.py data/ClueBackup-2022-01-11.cluedata
 
+cycles = [
+    {
+        start_date = [Timestamp],
+        cycle_length = [int],
+        period_length = [int],
+        period = [ 
+            {
+                'day': [Timestamp],
+                'period': [str], 
+                'period_numeric': [int]
+            }
+        ]
+    }
+]
 """
 def main(args):
     if len(args) != 2:
@@ -38,7 +52,11 @@ def extract_cycles(file_name):
     entries = process_entries(entries) # assign numeric values to periods
     cycles = break_into_cycles(entries) # separate clue entries into cycles
 
+    # print result
     print(f'{len(cycles)} cycles extracted ({removed} entries removed)')
+    for cycle in cycles:
+        print(f'{cycle["start_date"]} - period {cycle["period_len"]} days - cycle {cycle["cycle_len"]} days')
+
     return cycles
 
 # extract "period" entries not set to 'excluded' in the app
@@ -69,7 +87,12 @@ def process_entries(entries):
 # add clue entry to cycles array
 def break_into_cycles(entries):
     cycles = []
-    cycle = []
+    cycle = {
+        "start_date" : None,
+        "cycle_len" : None,
+        "period_len" : None,
+        "period" : []
+    }
     for entry in entries:
         cycle, cycles = add_entry_to_cycle(entry, cycle, cycles)
 
@@ -77,18 +100,34 @@ def break_into_cycles(entries):
 
 # add clue entry to cycles array
 def add_entry_to_cycle(entry, cycle, cycles):
-    # if first entry in cycle, or entry is not true period (i.e. spotting/IUD), add without checking dates
-    if len(cycle) == 0 or not is_period(entry):
-        cycle.append(entry)
+
+    # first entry in first cycle, set start date and add without checking dates
+    if len(cycle["period"]) == 0:
+        cycle["period"].append(entry)
+        cycle["start_date"] = entry["day"]
+    
+    # if spotting entry, add without checking dates
+    elif not is_period(entry):
+        cycle["period"].append(entry)
     else:
         # add entry to current cycle if 5 days or less since last period day in current cycle
-        last_entry = get_last_period_entry_in_cycle(cycle)
+        last_entry = get_last_period_entry_in_cycle(cycle["period"])
         if (entry["day"] <= last_entry["day"] + datetime.timedelta(days=5)):
-            cycle.append(entry)
+            cycle["period"].append(entry)
         else:
-            # add to new cycle if there's a gap of more than 1 day
+            # close cycle
+            cycle["cycle_len"] = (entry["day"] - cycle["start_date"]).days
+            cycle["period_len"] = (get_last_period_entry_in_cycle(cycle["period"])["day"] - cycle["start_date"]).days +1
             cycles.append(cycle)
-            cycle=[entry]
+
+            # start new cycle
+            cycle = {
+                "start_date" : entry["day"],
+                "period_len" : 0,
+                "period" : [
+                    entry
+                ]
+            }
 
     return cycle, cycles
 

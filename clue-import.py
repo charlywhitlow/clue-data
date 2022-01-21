@@ -41,12 +41,12 @@ def extract_cycles(file_name):
     print(f'{len(cycles)} cycles extracted ({removed} entries removed)')
     return cycles
 
-# extract "period" and "iud" entries not set to 'excluded' in the app
+# extract "period" entries not set to 'excluded' in the app
 def filter_entries(entries):
     filtered = []
     removed = 0
     for entry in entries:
-        if (not ("marks_excluded_cycle" in entry.keys() and entry["marks_excluded_cycle"] == True)) and ("period" in entry.keys() or "iud" in entry.keys()):
+        if (not ("marks_excluded_cycle" in entry.keys() and entry["marks_excluded_cycle"] == True)) and ("period" in entry.keys()):
             filtered.append(entry)
         else:
             removed+=1

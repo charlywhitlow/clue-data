@@ -14,7 +14,8 @@ To run in virtual environment:
     pip3 install -r environment.yaml
 
     # run program
-    python3 clue-import.py
+    python3 clue-import.py [cluedata file]
+    python3 clue-import.py data/SampleData.cluedata
 
     # to update environment.yaml file from active environment
     pip3 freeze > environment.yaml

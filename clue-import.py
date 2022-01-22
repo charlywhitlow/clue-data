@@ -11,6 +11,7 @@ from pathlib import Path
 # Program expects 1 argument: the path to a json data file extracted from clue app:
 
     > python3 clue-import.py [Clue data file]
+    > python3 clue-import.py data/SampleData.cluedata
 
 # transforms cluedata into data object:
     data = {
@@ -42,7 +43,6 @@ def main(args):
     else:
         file_name = args[1]
         if (exists(file_name)):
-            # file_name = "data/ClueBackup-2022-01-11.json"
             cycles = extract_cycles(file_name)
 
         else:

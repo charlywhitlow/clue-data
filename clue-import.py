@@ -4,6 +4,8 @@ import pandas as pd
 import sys
 from os.path import exists
 from numpy.lib.function_base import average
+import csv
+from pathlib import Path
 
 """
 # Program expects 1 argument: the path to a json data file extracted from clue app:
@@ -48,8 +50,8 @@ def main(args):
             print('Usage:\n > python3 clue-import.py [data.json]')
 
 # extract cycles from json file
-def extract_cycles(file_name):
-    with open(file_name, "r") as read_file:
+def extract_cycles(file_path):
+    with open(file_path, "r") as read_file:
         try:
             data = json.load(read_file)
         except json.decoder.JSONDecodeError:
@@ -60,13 +62,6 @@ def extract_cycles(file_name):
     entries, removed = filter_entries(data["data"]) # remove data we're not interested in
     entries = process_entries(entries) # assign numeric values to periods
     cycles = break_into_cycles(entries) # separate clue entries into cycles
-
-    # print result
-    print(f'{len(cycles)} cycles extracted ({removed} entries removed)')
-    for cycle in cycles:
-        print(f'{cycle["start_date"].strftime("%d/%m/%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
-
-    # build data object
     data = {
         "num_cycles" : len(cycles),
         "max_cycle_length" : max([cycle["cycle_length"] for cycle in cycles]),
@@ -74,10 +69,38 @@ def extract_cycles(file_name):
         "average_period_length" : average([cycle["period_length"] for cycle in cycles]),
         "cycles" : cycles
     }
+    file_path = f'output_csv/{Path(file_path).stem}_processed_{datetime.date.today().strftime("%d-%m-%Y")}.csv'
+    write_to_csv(data, file_path)
+
+    # print result
+    print(f'{len(cycles)} cycles extracted ({removed} entries removed)')
+    for cycle in cycles:
+        print(f'{cycle["start_date"].strftime("%d/%m/%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
     print(f'Average cycle length: {data["average_cycle_length"]}')
     print(f'Average period length: {data["average_period_length"]}')
 
     return data
+
+# write data object to csv
+def write_to_csv(data, file_path):
+
+    with open(file_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+
+        headers = ["Cycle Start Date","Cycle Length","Period Length"]
+        for i in range (1, data["max_cycle_length"]+1):
+            headers.append(f'Day {i}')
+        writer.writerow(headers)
+
+        for cycle in data["cycles"]:
+            row = [0 for day in range(cycle["cycle_length"]+3)]
+            row[0] = cycle["start_date"].strftime("%d/%m/%Y")
+            row[1] = cycle["cycle_length"]
+            row[2] = cycle["period_length"]
+            for day in cycle["period"]:
+                num = (day["day"]-cycle["start_date"]).days
+                row[num+3] = day["period_numeric"]
+            writer.writerow(row)
 
 # extract "period" entries not set to 'excluded' in the app
 def filter_entries(entries):

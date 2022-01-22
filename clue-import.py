@@ -3,25 +3,34 @@ import datetime
 import pandas as pd
 import sys
 from os.path import exists
+from numpy.lib.function_base import average
 
 """
-Program expects 1 argument: the path to the json data file, extracted from clue app, i.e.:
-    > python3 clue-import.py data/ClueBackup-2022-01-11.cluedata
+# Program expects 1 argument: the path to a json data file extracted from clue app:
 
-cycles = [
-    {
-        start_date = [Timestamp],
-        cycle_length = [int],
-        period_length = [int],
-        period = [ 
+    > python3 clue-import.py [Clue data file]
+
+# transforms cluedata into data object:
+    data = {
+        num_cycles : [int],
+        max_cycle_length : [int],
+        average_cycle_length : [int],
+        average_period_length : [int],
+        cycles : [
             {
-                'day': [Timestamp],
-                'period': [str], 
-                'period_numeric': [int]
+                start_date : [Timestamp],
+                cycle_length : [int],
+                period_length : [int],
+                period : [
+                    {
+                        day : [Timestamp],
+                        period : [str], 
+                        period_numeric : [int]
+                    }
+                ]
             }
         ]
     }
-]
 """
 def main(args):
     if len(args) != 2:
@@ -55,9 +64,20 @@ def extract_cycles(file_name):
     # print result
     print(f'{len(cycles)} cycles extracted ({removed} entries removed)')
     for cycle in cycles:
-        print(f'{cycle["start_date"]} - period {cycle["period_len"]} days - cycle {cycle["cycle_len"]} days')
+        print(f'{cycle["start_date"].strftime("%d/%m/%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
 
-    return cycles
+    # build data object
+    data = {
+        "num_cycles" : len(cycles),
+        "max_cycle_length" : max([cycle["cycle_length"] for cycle in cycles]),
+        "average_cycle_length" : average([cycle["cycle_length"] for cycle in cycles]),
+        "average_period_length" : average([cycle["period_length"] for cycle in cycles]),
+        "cycles" : cycles
+    }
+    print(f'Average cycle length: {data["average_cycle_length"]}')
+    print(f'Average period length: {data["average_period_length"]}')
+
+    return data
 
 # extract "period" entries not set to 'excluded' in the app
 def filter_entries(entries):
@@ -89,8 +109,8 @@ def break_into_cycles(entries):
     cycles = []
     cycle = {
         "start_date" : None,
-        "cycle_len" : None,
-        "period_len" : None,
+        "cycle_length" : None,
+        "period_length" : None,
         "period" : []
     }
     for entry in entries:
@@ -116,14 +136,14 @@ def add_entry_to_cycle(entry, cycle, cycles):
             cycle["period"].append(entry)
         else:
             # close cycle
-            cycle["cycle_len"] = (entry["day"] - cycle["start_date"]).days
-            cycle["period_len"] = (get_last_period_entry_in_cycle(cycle["period"])["day"] - cycle["start_date"]).days +1
+            cycle["cycle_length"] = (entry["day"] - cycle["start_date"]).days
+            cycle["period_length"] = (get_last_period_entry_in_cycle(cycle["period"])["day"] - cycle["start_date"]).days +1
             cycles.append(cycle)
 
             # start new cycle
             cycle = {
                 "start_date" : entry["day"],
-                "period_len" : 0,
+                "period_length" : 0,
                 "period" : [
                     entry
                 ]

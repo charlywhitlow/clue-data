@@ -2,8 +2,8 @@ from os.path import exists
 import sys
 from pathlib import Path
 from datetime import date
-import process_cluedata
-import generate_csv
+from lib import process_cluedata
+from lib import generate_csv
 
 """
 # Program expects 1 argument: the path to a json data file extracted from clue app:

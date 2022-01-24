@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import date
 from lib import process_cluedata
 from lib import generate_csv
+from lib import generate_pdf
 
 """
 # Program expects 1 argument: the path to a json data file extracted from clue app:
@@ -27,7 +28,7 @@ def main(args):
             generate_csv.write_to_csv(data, csv_file_path)
 
             # generate pdf report
-            # TODO
+            generate_pdf.create_report(data)
 
         else:
             print(f'Error: File \'{file_path}\' not found')

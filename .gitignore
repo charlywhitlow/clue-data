@@ -3,3 +3,4 @@ data/ClueBackup*
 output_csv/*
 __pycache__
 */__pycache__
+reports/*

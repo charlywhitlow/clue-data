@@ -1,9 +1,8 @@
 from fpdf import FPDF
 from datetime import date
 from matplotlib import pyplot as plt
-import pandas as pd
-import numpy as np
 import tempfile
+from matplotlib.ticker import (MultipleLocator)
 
 class PDF(FPDF):
 
@@ -65,21 +64,25 @@ class PDF(FPDF):
                 cycle_days[day_num] = entry['period_numeric']
 
             # build chart
-            fig, ax = plt.subplots()
-            ax.set_xlabel('Day')
-            ax.set_ylabel('Flow')
+            fig, ax = plt.subplots(figsize=(8,2), dpi=None, facecolor=None, edgecolor=None, linewidth=0.0, frameon=None, subplotpars=None, tight_layout=True, constrained_layout=None)
+            # ax.set_xlabel('Day')
+            # ax.set_ylabel('Flow')
             ax.set_xticks(x_axis_labels)
+            ax.xaxis.set_minor_locator(MultipleLocator(.5)) # add minor ticks between items
+            ax.tick_params(which='minor', length=8)
+            ax.tick_params(axis='x', which='major',length=0) # hide major ticks
+            ax.set_xlim(x_axis_labels[0]-.5, x_axis_labels[-1]+.5)
             ax.set_yticks(y_axis_labels)
-            ax.plot(range(1, len(cycle_days)+1), cycle_days);  # Plot some data on the axes
+            ax.bar(range(1, len(cycle_days)+1), cycle_days, 1)
 
             # create temp image file
             temp = tempfile.NamedTemporaryFile(suffix='.png')
             plt.savefig(temp)
 
             # add image to pdf at current y, x=12
-            self.image(temp.name, 12, None, 0, 35) # name, x, y, w, h
+            self.image(temp.name, 11, None, 185, 35) # name, x, y, w, h
             temp.close() # delete temp file
-            self.ln(10) # 5 to pad gap + 5 gap
+            self.ln(5) # 5 to pad gap
 
 
 def create_report(data):

@@ -39,11 +39,57 @@ class PDF(FPDF):
         self.cell(0, 9, f'Average period length: {data["average_period_length"]:.1f}', 0, 1, 'L')
         self.ln(4)
 
-    def add_charts_section(self, data):
+        # summary charts
+        self.cell(92, 62, '', 1, 0)
+        self.set_x(108) # gap
+        self.cell(92, 62, '', 1, 0)
+        self.set_x(12) # return to beginning of row
+        self.set_font('Arial', 'B', 14)
+        self.cell(88, 10, 'Period length over time', 0, 0, 'C')
+        self.set_x(110) # gap
+        self.cell(88, 10, 'Cycle length over time', 0, 1, 'C')
+        image_height = 50
+        self.add_summary_chart_period_length_over_time(data, image_height, x=11)
+        self.set_y(self.get_y() - image_height) # return to image x
+        self.add_summary_chart_cycle_length_over_time(data, image_height, x=110)
+        self.ln(10) # gap
+
+    def add_summary_chart_period_length_over_time(self, data, image_height, x):
+        fig, ax = plt.subplots(figsize=(3, 2), tight_layout=True)
+        period_lengths = [cycle['period_length'] for cycle in data['cycles']]
+        ax.scatter(range(data["num_cycles"]), period_lengths, marker="x")
+        ax.set_ylim(0, max(period_lengths)+1)
+        ax.set_ylim(max(0, min(period_lengths)-2), max(period_lengths)+1)
+        ax.yaxis.set_major_locator(plt.MultipleLocator(base=1.0))
+        ax.set_ylabel('Days on')
+        ax.set_xlabel('Cycle Number')
+
+        # create temp image file and add to pdf
+        temp = tempfile.NamedTemporaryFile(suffix='.png')
+        plt.savefig(temp)
+        self.image(temp.name, x, None, 88, image_height)
+        temp.close() # delete temp file
+
+    def add_summary_chart_cycle_length_over_time(self, data, image_height, x):
+        fig, ax = plt.subplots(figsize=(3, 2), tight_layout=True) 
+        cycle_lengths = [cycle['cycle_length'] for cycle in data['cycles']]
+        ax.scatter(range(data["num_cycles"]), cycle_lengths, marker="x")
+        ax.set_ylim(max(0, min(cycle_lengths)-2), max(cycle_lengths)+1)
+        ax.yaxis.set_major_locator(plt.MultipleLocator(base=1.0))
+        ax.set_ylabel('Cycle Length')
+        ax.set_xlabel('Cycle Number')
+
+        # create temp image file and add to pdf
+        temp = tempfile.NamedTemporaryFile(suffix='.png')
+        plt.savefig(temp)
+        self.image(temp.name, x, None, 88, image_height)
+        temp.close() # delete temp file
+
+    def add_cycle_detail_section(self, data):
 
         # section heading
         self.set_font('Arial', 'B', 14)
-        self.cell(0, 10, 'Detail', 0, 1, 'L')
+        self.cell(0, 10, 'Cycle Detail', 0, 1, 'L')
         self.ln(2)
 
         # add charts
@@ -111,5 +157,5 @@ def create_report(data):
     pdf.add_page()
     pdf.set_font('Arial', '', 12)
     pdf.add_summary_section(data)
-    pdf.add_charts_section(data)
+    pdf.add_cycle_detail_section(data)
     pdf.output(f'reports/Clue_Report_{date.today().strftime("%d-%m-%Y")}.pdf', 'F')

@@ -47,49 +47,55 @@ class PDF(FPDF):
 
         # add charts
         self.set_font('Arial', '', 12)
+        c1 = 'C0'
         x_axis_labels = [x+1 for x in range(data['max_cycle_length']+1)]
-        y_axis_labels = [1,2,3,4]
+        y_axis_labels = [1,2,3]
         for i in range(1, data['num_cycles']+1):
             cycle = data["cycles"][i-1]
 
             # create pdf cell for current cycle
-            self.cell(0, 50, '', 1, 0)
+            self.cell(0, 45, '', 1, 0)
             self.set_x(12)
             self.cell(0, 10, f'Cycle {i}: {cycle["start_date"].strftime("%d/%m/%Y")}  |  period {cycle["period_length"]} days  |  cycle {cycle["cycle_length"]} days', 0, 1)
 
-            # create figure
-            fig, ax = plt.subplots(figsize=(9,2), tight_layout=True)
-            ax.set_xticks(x_axis_labels)
-            ax.xaxis.set_minor_locator(MultipleLocator(.5)) # add minor ticks between items
-            ax.tick_params(which='minor', length=8)
-            ax.tick_params(axis='x', which='major',length=0) # hide major ticks
-            ax.set_xlim(x_axis_labels[0]-.5, x_axis_labels[-1]+.5)
-            ax.set_yticks(y_axis_labels)
-
             # build cycle data and plot on bar graph
-            cycle_days = [0 for x in range(cycle['cycle_length'])]
             start_date = cycle['start_date']
+            period_days = [0 for x in range(cycle['cycle_length'])]
+            spotting_days = [-1 for x in range(cycle['cycle_length'])]
             for entry in cycle['period']:
                 day_num = (entry['day'] - start_date).days
-                cycle_days[day_num] = entry['period_numeric']
-            ax.bar(range(1, len(cycle_days)+1), cycle_days, 1)
+                if entry['period_numeric'] == 1:
+                    spotting_days[day_num] = 0.4
+                else:
+                    period_days[day_num] = entry['period_numeric']-1
+
+            fig, ax = plt.subplots(figsize=(10, 1.5), tight_layout=True)
+            ax.bar(range(1, len(period_days)+1), period_days, 1, color=c1) # period bars
+            ax.scatter(range(1, len(spotting_days)+1), spotting_days, s=70, color=c1) # spotting markers
+            ax.xaxis.set_minor_locator(MultipleLocator(.5)) # add minor ticks between items
+            ax.set_xlim(x_axis_labels[0]-0.5, x_axis_labels[-1]+0.5)
+            ax.tick_params(which='minor', length=8)
+            ax.tick_params(axis='x', which='major',length=0) # hide major ticks
+            ax.set_xticks(x_axis_labels)
+            ax.set_yticks(y_axis_labels)
+            ax.set_ylim(0, 3.2)
 
             # add cycle length line on second x axis
             ax_line = ax.twiny()
             ax_line.set_xticks(x_axis_labels)
-            ax_line.plot([0.05 for x in range(cycle['cycle_length']+1)], lw=4, color='green')
+            ax_line.plot([0.05 for x in range(cycle['cycle_length']+1)], linewidth=4, color=c1) # cycle length line
             ax_line.set_xlim(x_axis_labels[0]-1, x_axis_labels[-1])
             ax_line.tick_params(axis='x', which='both',length=0) # hide all ticks
             ax_line.set_xticklabels([])
-            ax_line.text(cycle['cycle_length']+0.7, 0.5, f'{cycle["cycle_length"]} days', horizontalalignment='right', color='green')
-            ax_line.plot([cycle['cycle_length']], 0.1, "o", color='green')
+            ax_line.text(cycle['cycle_length']+0.7, 0.5, f'{cycle["cycle_length"]} days', horizontalalignment='right', color=c1)
+            ax_line.scatter([cycle['cycle_length']], 0.2, s=100, marker="|", color=c1, linewidth=4)
 
             # create temp image file
             temp = tempfile.NamedTemporaryFile(suffix='.png')
             plt.savefig(temp)
 
             # add image to pdf at current y, x=12
-            self.image(temp.name, 11, None, 185, 35) # name, x, y, w, h
+            self.image(temp.name, 11, None, 185, 30) # name, x, y, w, h
             temp.close() # delete temp file
             self.ln(5) # 5 to pad gap
 

@@ -1,6 +1,9 @@
 from fpdf import FPDF
 from datetime import date
-
+from matplotlib import pyplot as plt
+import pandas as pd
+import numpy as np
+import tempfile
 
 class PDF(FPDF):
 
@@ -37,20 +40,47 @@ class PDF(FPDF):
         self.ln(4)
 
     def add_charts_section(self, data):
-        
+
         # section heading
         self.set_font('Arial', 'B', 14)
         self.cell(0, 10, 'Detail', 0, 1, 'L')
         self.ln(2)
 
-        # charts
+        # add charts
         self.set_font('Arial', '', 12)
+        x_axis_labels = [x+1 for x in range(data['max_cycle_length'])]
+        y_axis_labels = [1,2,3,4]
         for i in range(1, data['num_cycles']+1):
             cycle = data["cycles"][i-1]
-            self.cell(0, 10, f'Cycle {i}: {cycle["start_date"].strftime("%d/%m/%Y")}  (period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days)', 1, 1)
-            self.cell(0, 20, f'[CHART]', 1, 1)
-            self.ln(3)
-            
+            self.cell(0, 50, '', 1, 0)
+            self.set_x(12)
+            self.cell(0, 10, f'Cycle {i}: {cycle["start_date"].strftime("%d/%m/%Y")}  |  period {cycle["period_length"]} days  |  cycle {cycle["cycle_length"]} days', 0, 1)
+
+            # build chart data
+            cycle = data['cycles'][i-1]
+            start_date = cycle['start_date']
+            cycle_days = [0 for x in range(cycle['cycle_length'])]
+            for entry in cycle['period']:
+                day_num = (entry['day'] - start_date).days
+                cycle_days[day_num] = entry['period_numeric']
+
+            # build chart
+            fig, ax = plt.subplots()
+            ax.set_xlabel('Day')
+            ax.set_ylabel('Flow')
+            ax.set_xticks(x_axis_labels)
+            ax.set_yticks(y_axis_labels)
+            ax.plot(range(1, len(cycle_days)+1), cycle_days);  # Plot some data on the axes
+
+            # create temp image file
+            temp = tempfile.NamedTemporaryFile(suffix='.png')
+            plt.savefig(temp)
+
+            # add image to pdf at current y, x=12
+            self.image(temp.name, 12, None, 0, 35) # name, x, y, w, h
+            temp.close() # delete temp file
+            self.ln(10) # 5 to pad gap + 5 gap
+
 
 def create_report(data):
     pdf = PDF()

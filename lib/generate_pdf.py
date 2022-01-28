@@ -3,20 +3,21 @@ from datetime import date
 from matplotlib import pyplot as plt
 import tempfile
 from matplotlib.ticker import (MultipleLocator)
+from datetime import timedelta
 
 class PDF(FPDF):
 
     def header(self):
         # Title
-        self.set_font('Arial', 'B', 24)
+        self.set_font('Arial', 'B', 20)
         self.cell(0, 10, 'Clue Period Tracker Report', 0, 1, 'C')
 
         # Subtitle
-        self.set_font('Arial', '', 12)
+        self.set_font('Arial', '', 11)
         self.cell(0, 10, f'Generated {date.today().strftime("%d/%m/%Y")}', 0, 1, 'C')
 
         # Line break
-        self.ln(5)
+        self.ln(10)
 
     def footer(self):
         # Page numbers       
@@ -34,8 +35,8 @@ class PDF(FPDF):
         # summary stats
         self.set_font('Arial', '', 12)
         self.cell(0, 9, f'Number of cycles: {data["num_cycles"]}', 0, 1, 'L')
-        self.cell(0, 9, f'Average cycle length: {data["average_cycle_length"]}', 0, 1, 'L')
-        self.cell(0, 9, f'Average period length: {data["average_period_length"]}', 0, 1, 'L')
+        self.cell(0, 9, f'Average cycle length: {data["average_cycle_length"]:.1f}', 0, 1, 'L')
+        self.cell(0, 9, f'Average period length: {data["average_period_length"]:.1f}', 0, 1, 'L')
         self.ln(4)
 
     def add_charts_section(self, data):
@@ -46,7 +47,6 @@ class PDF(FPDF):
         self.ln(2)
 
         # add charts
-        self.set_font('Arial', '', 12)
         c1 = 'C0'
         x_axis_labels = [x+1 for x in range(data['max_cycle_length']+1)]
         y_axis_labels = [1,2,3]
@@ -56,7 +56,11 @@ class PDF(FPDF):
             # create pdf cell for current cycle
             self.cell(0, 45, '', 1, 0)
             self.set_x(12)
-            self.cell(0, 10, f'Cycle {i}: {cycle["start_date"].strftime("%d/%m/%Y")}  |  period {cycle["period_length"]} days  |  cycle {cycle["cycle_length"]} days', 0, 1)
+            self.set_font('Arial', 'B', 12)
+            str1 = f'Cycle {i}:  '
+            self.cell(self.get_string_width(str1), 10, str1, 0, 0)
+            self.set_font('Arial', 'I', 11)
+            self.cell(0, 10, f'{cycle["start_date"].strftime("%d-%b-%Y")} - {(cycle["start_date"] + timedelta(days=cycle["cycle_length"]-1)).strftime("%d-%b-%Y")}', 0, 1)
 
             # build cycle data and plot on bar graph
             start_date = cycle['start_date']
@@ -79,6 +83,7 @@ class PDF(FPDF):
             ax.set_xticks(x_axis_labels)
             ax.set_yticks(y_axis_labels)
             ax.set_ylim(0, 3.2)
+            ax.text(cycle['period_length']+0.9, 1, f'{cycle["period_length"]} days on ({cycle["cycle_length"]-cycle["period_length"]} days off)', horizontalalignment='left', color=c1, style='italic')
 
             # add cycle length line on second x axis
             ax_line = ax.twiny()
@@ -87,8 +92,8 @@ class PDF(FPDF):
             ax_line.set_xlim(x_axis_labels[0]-1, x_axis_labels[-1])
             ax_line.tick_params(axis='x', which='both',length=0) # hide all ticks
             ax_line.set_xticklabels([])
-            ax_line.text(cycle['cycle_length']+0.7, 0.5, f'{cycle["cycle_length"]} days', horizontalalignment='right', color=c1)
-            ax_line.scatter([cycle['cycle_length']], 0.2, s=100, marker="|", color=c1, linewidth=4)
+            ax_line.text(cycle['cycle_length']+0.85, 0.75, f'{cycle["cycle_length"]} days', horizontalalignment='right', color=c1)
+            ax_line.scatter([cycle['cycle_length']], 0.2, s=200, marker="|", color=c1, linewidth=4)
 
             # create temp image file
             temp = tempfile.NamedTemporaryFile(suffix='.png')

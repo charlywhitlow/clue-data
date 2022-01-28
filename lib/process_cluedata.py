@@ -51,7 +51,7 @@ def extract_cycles(file_path):
     # print result
     print(f'{len(cycles)} cycles extracted ({removed} entries removed)')
     for cycle in cycles:
-        print(f'{cycle["start_date"].strftime("%d/%m/%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
+        print(f'{cycle["start_date"].strftime("%d-%b-%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
     print(f'Average cycle length: {data["average_cycle_length"]}')
     print(f'Average period length: {data["average_period_length"]}')
 

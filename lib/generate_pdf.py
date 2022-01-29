@@ -35,19 +35,27 @@ class PDF(FPDF):
         # summary stats
         self.set_font('Arial', '', 12)
         self.cell(0, 9, f'Number of cycles: {data["num_cycles"]}', 0, 1, 'L')
-        self.cell(0, 9, f'Average cycle length: {data["average_cycle_length"]:.1f}', 0, 1, 'L')
-        self.cell(0, 9, f'Average period length: {data["average_period_length"]:.1f}', 0, 1, 'L')
         self.ln(4)
 
         # summary charts
-        self.cell(92, 62, '', 1, 0)
+        self.cell(92, 72, '', 1, 0)
         self.set_x(108) # gap
-        self.cell(92, 62, '', 1, 0)
-        self.set_x(12) # return to beginning of row
+        self.cell(92, 72, '', 1, 0)
+        self.set_x(12) # return cursor to start of row
+
+        # headers
         self.set_font('Arial', 'B', 14)
         self.cell(88, 10, 'Cycle Length', 0, 0, 'C')
         self.set_x(110) # gap
         self.cell(88, 10, 'Period Length', 0, 1, 'C')
+
+        # average
+        self.set_font('Arial', '', 11)
+        self.cell(88, 10, f'Average: {data["average_cycle_length"]:.1f} days', 0, 0, 'C')
+        self.set_x(110) # move to start of second chart
+        self.cell(88, 10, f'Average: {data["average_period_length"]:.1f} days', 0, 1, 'C')
+
+        # add charts
         image_height = 50
         cycle_nums = range(data["num_cycles"])
         cycle_lengths = [cycle['cycle_length'] for cycle in data['cycles']]
@@ -64,11 +72,12 @@ class PDF(FPDF):
         self.ln(10) # gap
 
     def add_summary_chart(self, x_values, y_values, y_label, x_label, image_height, image_width, x):
-        fig, ax = plt.subplots(figsize=(3, 2), tight_layout=True) 
+        fig, ax = plt.subplots(figsize=(3.5, 2), tight_layout=True) 
         ax.scatter(x_values, y_values, marker="x")
         ax.set_ylim(max(0, min(y_values)-2), max(y_values)+1)
-        ax.yaxis.set_major_locator(plt.MultipleLocator(base=1.0))
         ax.set_ylabel(y_label)
+        ax.tick_params(axis='x', which='major',length=0) # hide major ticks
+        ax.get_xaxis().set_ticks([])
         ax.set_xlabel(x_label)
 
         # create temp image file and add to pdf

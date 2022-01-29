@@ -12,6 +12,16 @@ from datetime import timedelta
             max_cycle_length : [int],
             average_cycle_length : [int],
             average_period_length : [int],
+            current_cycle : {
+                start_date : [Timestamp],
+                period : [
+                    {
+                        day : [Timestamp],
+                        period : [str], 
+                        period_numeric : [int]
+                    }
+                ]
+            },
             cycles : [
                 {
                     start_date : [Timestamp],
@@ -39,17 +49,20 @@ def extract_cycles(file_path):
 
     entries = [ entry for entry in data["data"] if "period" in entry.keys() ] # remove non-period data
     entries = process_entries(entries) # assign numeric values to periods
-    cycles = break_into_cycles(entries) # separate clue entries into cycles
+    cycles, current_cycle = break_into_cycles(entries) # separate clue entries into cycles
+    current_cycle['period_length'] = len(current_cycle['period'])
+
     data = {
         "num_cycles" : len(cycles),
         "max_cycle_length" : max([cycle["cycle_length"] for cycle in cycles]),
         "average_cycle_length" : average([cycle["cycle_length"] for cycle in cycles]),
         "average_period_length" : average([cycle["period_length"] for cycle in cycles]),
-        "cycles" : cycles
+        "cycles" : cycles,
+        "current_cycle" : current_cycle
     }
 
     # print result
-    print(f"{len(cycles)} cycles extracted")
+    print(f"{len(cycles)} complete cycles extracted (plus current cycle)")
     for cycle in cycles:
         print(f'{cycle["start_date"].strftime("%d-%b-%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
     print(f'Average cycle length: {data["average_cycle_length"]}')
@@ -83,7 +96,7 @@ def break_into_cycles(entries):
     for entry in entries:
         cycle, cycles = add_entry_to_cycle(entry, cycle, cycles)
 
-    return cycles
+    return cycles, cycle
 
 # add clue entry to cycles array
 def add_entry_to_cycle(entry, cycle, cycles):

@@ -45,44 +45,36 @@ class PDF(FPDF):
         self.cell(92, 62, '', 1, 0)
         self.set_x(12) # return to beginning of row
         self.set_font('Arial', 'B', 14)
-        self.cell(88, 10, 'Period length over time', 0, 0, 'C')
+        self.cell(88, 10, 'Cycle Length', 0, 0, 'C')
         self.set_x(110) # gap
-        self.cell(88, 10, 'Cycle length over time', 0, 1, 'C')
+        self.cell(88, 10, 'Period Length', 0, 1, 'C')
         image_height = 50
-        self.add_summary_chart_period_length_over_time(data, image_height, x=11)
-        self.set_y(self.get_y() - image_height) # return to image x
-        self.add_summary_chart_cycle_length_over_time(data, image_height, x=110)
+        cycle_nums = range(data["num_cycles"])
+        cycle_lengths = [cycle['cycle_length'] for cycle in data['cycles']]
+        period_lengths = [cycle['period_length'] for cycle in data['cycles']]
+        self.add_summary_chart(
+            x_label='Time', x_values=cycle_nums, 
+            y_label='Days in cycle', y_values=cycle_lengths, 
+            x=11, image_width=88, image_height=image_height)
+        self.set_y(self.get_y() - image_height) # return cursor to image x
+        self.add_summary_chart(
+            x_label='Time', x_values=cycle_nums, 
+            y_label='Days on', y_values=period_lengths, 
+            x=110, image_width=88, image_height=image_height)
         self.ln(10) # gap
 
-    def add_summary_chart_period_length_over_time(self, data, image_height, x):
-        fig, ax = plt.subplots(figsize=(3, 2), tight_layout=True)
-        period_lengths = [cycle['period_length'] for cycle in data['cycles']]
-        ax.scatter(range(data["num_cycles"]), period_lengths, marker="x")
-        ax.set_ylim(0, max(period_lengths)+1)
-        ax.set_ylim(max(0, min(period_lengths)-2), max(period_lengths)+1)
-        ax.yaxis.set_major_locator(plt.MultipleLocator(base=1.0))
-        ax.set_ylabel('Days on')
-        ax.set_xlabel('Cycle Number')
-
-        # create temp image file and add to pdf
-        temp = tempfile.NamedTemporaryFile(suffix='.png')
-        plt.savefig(temp)
-        self.image(temp.name, x, None, 88, image_height)
-        temp.close() # delete temp file
-
-    def add_summary_chart_cycle_length_over_time(self, data, image_height, x):
+    def add_summary_chart(self, x_values, y_values, y_label, x_label, image_height, image_width, x):
         fig, ax = plt.subplots(figsize=(3, 2), tight_layout=True) 
-        cycle_lengths = [cycle['cycle_length'] for cycle in data['cycles']]
-        ax.scatter(range(data["num_cycles"]), cycle_lengths, marker="x")
-        ax.set_ylim(max(0, min(cycle_lengths)-2), max(cycle_lengths)+1)
+        ax.scatter(x_values, y_values, marker="x")
+        ax.set_ylim(max(0, min(y_values)-2), max(y_values)+1)
         ax.yaxis.set_major_locator(plt.MultipleLocator(base=1.0))
-        ax.set_ylabel('Cycle Length')
-        ax.set_xlabel('Cycle Number')
+        ax.set_ylabel(y_label)
+        ax.set_xlabel(x_label)
 
         # create temp image file and add to pdf
         temp = tempfile.NamedTemporaryFile(suffix='.png')
         plt.savefig(temp)
-        self.image(temp.name, x, None, 88, image_height)
+        self.image(temp.name, x, None, image_width, image_height)
         temp.close() # delete temp file
 
     def add_cycle_detail_section(self, data):

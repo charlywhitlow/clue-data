@@ -37,7 +37,7 @@ def extract_cycles(file_path):
             print('Usage:\n > python3 clue-import.py [data.json]')
             return
 
-    entries, removed = filter_entries(data["data"]) # remove data we're not interested in
+    entries = [ entry for entry in data["data"] if "period" in entry.keys() ] # remove non-period data
     entries = process_entries(entries) # assign numeric values to periods
     cycles = break_into_cycles(entries) # separate clue entries into cycles
     data = {
@@ -49,24 +49,13 @@ def extract_cycles(file_path):
     }
 
     # print result
-    print(f'{len(cycles)} cycles extracted ({removed} entries removed)')
+    print(f"{len(cycles)} cycles extracted")
     for cycle in cycles:
         print(f'{cycle["start_date"].strftime("%d-%b-%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
     print(f'Average cycle length: {data["average_cycle_length"]}')
     print(f'Average period length: {data["average_period_length"]}')
 
     return data
-
-# extract "period" entries not set to 'excluded' in the app
-def filter_entries(entries):
-    filtered = []
-    removed = 0
-    for entry in entries:
-        if (not ("marks_excluded_cycle" in entry.keys() and entry["marks_excluded_cycle"] == True)) and ("period" in entry.keys()):
-            filtered.append(entry)
-        else:
-            removed+=1
-    return filtered, removed
 
 # add numeric value for period
 def process_entries(entries):

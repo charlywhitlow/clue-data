@@ -83,6 +83,7 @@ class PDF(FPDF):
         # create temp image file and add to pdf
         temp = tempfile.NamedTemporaryFile(suffix='.png')
         plt.savefig(temp)
+        plt.close(fig)
         self.image(temp.name, x, None, image_width, image_height)
         temp.close() # delete temp file
 
@@ -145,6 +146,7 @@ class PDF(FPDF):
             # create temp image file
             temp = tempfile.NamedTemporaryFile(suffix='.png')
             plt.savefig(temp)
+            plt.close(fig)
 
             # add image to pdf at current y, x=12
             self.image(temp.name, 11, None, 185, 30) # name, x, y, w, h

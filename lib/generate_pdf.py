@@ -98,7 +98,7 @@ class PDF(FPDF):
         c1 = 'C0'
         x_axis_labels = [x+1 for x in range(data['max_cycle_length']+1)]
         y_axis_labels = [1,2,3]
-        for i in range(1, data['num_cycles']+1):
+        for i in range(data['num_cycles'], 0, -1):
             cycle = data["cycles"][i-1]
 
             # create pdf cell for current cycle

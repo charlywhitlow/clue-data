@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import tempfile
 from matplotlib.ticker import (MultipleLocator)
 from datetime import timedelta
+import numpy as np
 from math import ceil
 
 class PDF(FPDF):
@@ -80,6 +81,10 @@ class PDF(FPDF):
         ax.tick_params(axis='x', which='major',length=0) # hide major ticks
         ax.get_xaxis().set_ticks([])
         ax.set_xlabel(x_label)
+
+        # add linear regression line
+        slope, intercept = np.polyfit(x_values, y_values, 1)
+        plt.plot(x_values, slope * x_values + intercept)
 
         # create temp image file and add to pdf
         temp = tempfile.NamedTemporaryFile(suffix='.png')

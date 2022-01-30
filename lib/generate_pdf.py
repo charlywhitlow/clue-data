@@ -190,4 +190,6 @@ def create_report(data):
     pdf.add_predicted_cycles(data)
     pdf.add_page()
     pdf.add_cycle_detail_section(data)
-    pdf.output(f'reports/Clue_Report_{date.today().strftime("%d-%m-%Y")}.pdf', 'F')
+    output_filepath = f'reports/Clue_Report_{date.today().strftime("%d-%m-%Y")}.pdf'
+    pdf.output(output_filepath, 'F')
+    print(f'Report created: {output_filepath}')

@@ -62,11 +62,7 @@ def extract_cycles(file_path):
     }
 
     # print result
-    print(f"{len(cycles)} complete cycles extracted (plus current cycle)")
-    for cycle in cycles:
-        print(f'{cycle["start_date"].strftime("%d-%b-%Y")} - period {cycle["period_length"]} days - cycle {cycle["cycle_length"]} days')
-    print(f'Average cycle length: {data["average_cycle_length"]}')
-    print(f'Average period length: {data["average_period_length"]}')
+    print(f"Data extracted ({len(cycles)} complete cycles plus current cycle)")
 
     return data
 

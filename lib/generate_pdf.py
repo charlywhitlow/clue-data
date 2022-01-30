@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import tempfile
 from matplotlib.ticker import (MultipleLocator)
 from datetime import timedelta
+from math import ceil
 
 class PDF(FPDF):
 
@@ -87,17 +88,43 @@ class PDF(FPDF):
         self.image(temp.name, x, None, image_width, image_height)
         temp.close() # delete temp file
 
-    def add_cycle_detail_section(self, data):
+    def add_predicted_cycles(self, data, n=12):
+        predicted_start_dates = [ 
+            (data['current_cycle']['start_date'] + timedelta(days=i * data['average_cycle_length'])) for i in range(1, n+1) ]
 
-        # section heading
+        # add titles and border
+        self.cell(0, ceil(n/2)*10 + 25, '', 1, 0)
+        self.set_x(12)
+        self.set_font('Arial', 'B', 14)
+        self.cell(0, 10, f"Predicted dates for next {n} periods", 0, 1, 'C')
+        self.set_font('Arial', 'I', 12)
+        self.cell(0, 10, f"Based on data from {data['num_cycles']} cycles", 0, 1, 'C')
+        self.set_font('Arial', '', 12)
+
+        # add dates
+        for i, expected_period_start in enumerate(predicted_start_dates):
+            expected_period_end = expected_period_start + timedelta(days=round(data['average_period_length'])-1)
+            # add first half to left column, second half to right column:
+            if i == ceil(n/2): self.set_y(self.get_y()-i*10) # set y once
+            if i+1 <= ceil(n/2): self.set_x(30) # set x each time
+            else: self.set_x(110)
+            self.cell(0, 10, f"{i+1}:  {expected_period_start.strftime('%d-%b-%Y')}  -  {expected_period_end.strftime('%d-%b-%Y')}", 0, 1)
+
+        self.cell(0, 13, "", 0, 1, 'L') # gap
+
+    def add_cycle_detail_section(self, data):
         self.set_font('Arial', 'B', 14)
         self.cell(0, 10, 'Cycle Detail', 0, 1, 'L')
         self.ln(2)
-
-        # add charts
         c1 = 'C0'
         x_axis_labels = [x+1 for x in range(data['max_cycle_length']+1)]
         y_axis_labels = [1,2,3]
+
+        # add current cycle
+        # TODO
+        print(f"{data['current_cycle']['start_date'].strftime('%d-%b-%Y')} (current)")
+
+        # add complete cycles
         for i in range(data['num_cycles'], 0, -1):
             cycle = data["cycles"][i-1]
 
@@ -160,5 +187,7 @@ def create_report(data):
     pdf.add_page()
     pdf.set_font('Arial', '', 12)
     pdf.add_summary_section(data)
+    pdf.add_predicted_cycles(data)
+    pdf.add_page()
     pdf.add_cycle_detail_section(data)
     pdf.output(f'reports/Clue_Report_{date.today().strftime("%d-%m-%Y")}.pdf', 'F')

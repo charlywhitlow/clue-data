@@ -121,70 +121,129 @@ class PDF(FPDF):
         self.set_font('Arial', 'B', 14)
         self.cell(0, 10, 'Cycle Detail', 0, 1, 'L')
         self.ln(2)
-        c1 = 'C0'
+        colour = 'C0'
         x_axis_labels = [x+1 for x in range(data['max_cycle_length']+1)]
         y_axis_labels = [1,2,3]
 
         # add current cycle
-        # TODO
-        print(f"{data['current_cycle']['start_date'].strftime('%d-%b-%Y')} (current)")
+        self.add_current_cycle(
+            data['current_cycle'], x_axis_labels, y_axis_labels, colour, i=data['num_cycles'], 
+            average_cycle_length=data['average_cycle_length'], 
+            max_cycle_length=data['max_cycle_length'])
 
         # add complete cycles
         for i in range(data['num_cycles'], 0, -1):
-            cycle = data["cycles"][i-1]
+            self.add_detail_cycle(data["cycles"][i-1], x_axis_labels, y_axis_labels, colour, i)
 
-            # create pdf cell for current cycle
-            self.cell(0, 45, '', 1, 0)
-            self.set_x(12)
-            self.set_font('Arial', 'B', 12)
-            str1 = f'Cycle {i}:  '
-            self.cell(self.get_string_width(str1), 10, str1, 0, 0)
-            self.set_font('Arial', 'I', 11)
-            self.cell(0, 10, f'{cycle["start_date"].strftime("%d-%b-%Y")} - {(cycle["start_date"] + timedelta(days=cycle["cycle_length"]-1)).strftime("%d-%b-%Y")}', 0, 1)
+    def add_detail_cycle(self, cycle, x_axis_labels, y_axis_labels, colour, i):
 
-            # build cycle data and plot on bar graph
-            start_date = cycle['start_date']
-            period_days = [0 for x in range(cycle['cycle_length'])]
-            spotting_days = [-1 for x in range(cycle['cycle_length'])]
-            for entry in cycle['period']:
-                day_num = (entry['day'] - start_date).days
-                if entry['period_numeric'] == 1:
-                    spotting_days[day_num] = 0.4
-                else:
-                    period_days[day_num] = entry['period_numeric']-1
+        # create pdf cell for current cycle
+        self.cell(0, 45, '', 1, 0)
+        self.set_x(12)
+        self.set_font('Arial', 'B', 12)
+        str1 = f'Cycle {i}:  '
+        self.cell(self.get_string_width(str1), 10, str1, 0, 0)
+        self.set_font('Arial', 'I', 11)
+        self.cell(0, 10, f"{cycle['start_date'].strftime('%d-%b-%Y')} - {(cycle['start_date'] + timedelta(days=cycle['cycle_length']-1)).strftime('%d-%b-%Y')}", 0, 1)
 
-            fig, ax = plt.subplots(figsize=(10, 1.5), tight_layout=True)
-            ax.bar(range(1, len(period_days)+1), period_days, 1, color=c1) # period bars
-            ax.scatter(range(1, len(spotting_days)+1), spotting_days, s=70, color=c1) # spotting markers
-            ax.xaxis.set_minor_locator(MultipleLocator(.5)) # add minor ticks between items
-            ax.set_xlim(x_axis_labels[0]-0.5, x_axis_labels[-1]+0.5)
-            ax.tick_params(which='minor', length=8)
-            ax.tick_params(axis='x', which='major',length=0) # hide major ticks
-            ax.set_xticks(x_axis_labels)
-            ax.set_yticks(y_axis_labels)
-            ax.set_ylim(0, 3.2)
-            ax.text(cycle['period_length']+0.9, 1, f'{cycle["period_length"]} days on ({cycle["cycle_length"]-cycle["period_length"]} days off)', horizontalalignment='left', color=c1, style='italic')
+        # build cycle data and plot on bar graph
+        period_days = [0 for x in range(cycle['cycle_length'])]
+        spotting_days = [-1 for x in range(cycle['cycle_length'])]
+        for entry in cycle['period']:
+            day_num = (entry['day'] - cycle['start_date']).days
+            if entry['period_numeric'] == 1:
+                spotting_days[day_num] = 0.4
+            else:
+                period_days[day_num] = entry['period_numeric']-1
 
-            # add cycle length line on second x axis
-            ax_line = ax.twiny()
-            ax_line.set_xticks(x_axis_labels)
-            ax_line.plot([0.05 for x in range(cycle['cycle_length']+1)], linewidth=4, color=c1) # cycle length line
-            ax_line.set_xlim(x_axis_labels[0]-1, x_axis_labels[-1])
-            ax_line.tick_params(axis='x', which='both',length=0) # hide all ticks
-            ax_line.set_xticklabels([])
-            ax_line.text(cycle['cycle_length']+0.85, 0.75, f'{cycle["cycle_length"]} days', horizontalalignment='right', color=c1)
-            ax_line.scatter([cycle['cycle_length']], 0.2, s=200, marker="|", color=c1, linewidth=4)
+        fig, ax = plt.subplots(figsize=(10, 1.5), tight_layout=True)
+        ax.bar(range(1, len(period_days)+1), period_days, 1, color=colour) # period bars
+        ax.scatter(range(1, len(spotting_days)+1), spotting_days, s=70, color=colour) # spotting markers
+        ax.xaxis.set_minor_locator(MultipleLocator(.5)) # add minor ticks between items
+        ax.set_xlim(x_axis_labels[0]-0.5, x_axis_labels[-1]+0.5)
+        ax.tick_params(which='minor', length=8)
+        ax.tick_params(axis='x', which='major',length=0) # hide major ticks
+        ax.set_xticks(x_axis_labels)
+        ax.set_yticks(y_axis_labels)
+        ax.set_ylim(0, 3.2)
+        ax.text(cycle['period_length']+0.9, 1, f'{cycle["period_length"]} days on ({cycle["cycle_length"]-cycle["period_length"]} days off)', horizontalalignment='left', color=colour, style='italic')
 
-            # create temp image file
-            temp = tempfile.NamedTemporaryFile(suffix='.png')
-            plt.savefig(temp)
-            plt.close(fig)
+        # add cycle length line on second x axis
+        ax_line = ax.twiny()
+        ax_line.set_xticks(x_axis_labels)
+        ax_line.plot([0.05 for x in range(cycle['cycle_length']+1)], linewidth=4, color=colour) # cycle length line
+        ax_line.set_xlim(x_axis_labels[0]-1, x_axis_labels[-1])
+        ax_line.tick_params(axis='x', which='both',length=0) # hide all ticks
+        ax_line.set_xticklabels([])
+        ax_line.text(cycle['cycle_length']+0.85, 0.75, f'{cycle["cycle_length"]} days', horizontalalignment='right', color=colour)
+        ax_line.scatter([cycle['cycle_length']], 0.2, s=200, marker="|", color=colour, linewidth=4)
 
-            # add image to pdf at current y, x=12
-            self.image(temp.name, 11, None, 185, 30) # name, x, y, w, h
-            temp.close() # delete temp file
-            self.ln(5) # 5 to pad gap
+        # create temp image file
+        temp = tempfile.NamedTemporaryFile(suffix='.png')
+        plt.savefig(temp)
+        plt.close(fig)
 
+        # add image to pdf at current y, x=12
+        self.image(temp.name, 11, None, 185, 30) # name, x, y, w, h
+        temp.close() # delete temp file
+        self.ln(5) # 5 to pad gap
+
+    def add_current_cycle(self, cycle, x_axis_labels, y_axis_labels, colour, i, average_cycle_length, max_cycle_length):
+        predicted_end_date = cycle['start_date'] + timedelta(days=round(average_cycle_length))
+
+        # create pdf cell for current cycle
+        self.cell(0, 45, '', 1, 0)
+        self.set_x(12)
+        self.set_font('Arial', 'B', 12)
+
+        str1 = f'Cycle {i+1}:  '
+        self.cell(self.get_string_width(str1), 10, str1, 0, 0)
+        self.set_font('Arial', 'I', 11)
+        self.cell(0, 10, f"{cycle['start_date'].strftime('%d-%b-%Y')} - (current cycle)", 0, 0)
+        self.set_font('Arial', '', 11)
+        self.cell(0, 10, f'Next period expected: {predicted_end_date.strftime("%d-%b-%Y")}  ', 0, 1, "R")
+
+        # build cycle data and plot on bar graph
+        period_days = [0 for x in range(max_cycle_length)]
+        spotting_days = [-1 for x in range(max_cycle_length)]
+        for entry in cycle['period']:
+            day_num = (entry['day'] - cycle['start_date']).days
+            if entry['period_numeric'] == 1:
+                spotting_days[day_num] = 0.4
+            else:
+                period_days[day_num] = entry['period_numeric']-1
+
+        fig, ax = plt.subplots(figsize=(10, 1.5), tight_layout=True)
+        ax.bar(range(1, len(period_days)+1), period_days, 1, color=colour) # period bars
+        ax.scatter(range(1, len(spotting_days)+1), spotting_days, s=70, color=colour) # spotting markers
+        ax.xaxis.set_minor_locator(MultipleLocator(.5)) # add minor ticks between items
+        ax.set_xlim(x_axis_labels[0]-0.5, x_axis_labels[-1]+0.5)
+        ax.tick_params(which='minor', length=8)
+        ax.tick_params(axis='x', which='major',length=0) # hide major ticks
+        ax.set_xticks(x_axis_labels)
+        ax.set_yticks(y_axis_labels)
+        ax.set_ylim(0, 3.2)
+        ax.text(cycle['period_length']+0.9, 1, f'{cycle["period_length"]} days recorded', horizontalalignment='left', color=colour, style='italic')
+
+        # add cycle length line on second x axis
+        ax_line = ax.twiny()
+        ax_line.set_xticks(x_axis_labels)
+        ax_line.plot([0.05 for x in range(round(average_cycle_length)+1)], linewidth=4, color=colour) # cycle length line
+        ax_line.set_xlim(x_axis_labels[0]-1, x_axis_labels[-1])
+        ax_line.tick_params(axis='x', which='both',length=0) # hide all ticks
+        ax_line.set_xticklabels([])
+        ax_line.text(average_cycle_length+0.85, 0.75, f'Expected: {average_cycle_length:.1f} days', horizontalalignment='right', color=colour)
+        ax_line.scatter([round(average_cycle_length)], 0.2, s=200, marker="|", color=colour, linewidth=4)
+
+        # create temp image file
+        temp = tempfile.NamedTemporaryFile(suffix='.png')
+        plt.savefig(temp)
+        plt.close(fig)
+
+        # add image to pdf at current y, x=12
+        self.image(temp.name, 11, None, 185, 30) # name, x, y, w, h
+        temp.close() # delete temp file
+        self.ln(5) # 5 to pad gap
 
 def create_report(data):
     pdf = PDF()

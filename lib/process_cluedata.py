@@ -50,7 +50,7 @@ def extract_cycles(file_path):
     entries = [ entry for entry in data["data"] if "period" in entry.keys() ] # remove non-period data
     entries = process_entries(entries) # assign numeric values to periods
     cycles, current_cycle = break_into_cycles(entries) # separate clue entries into cycles
-    current_cycle['period_length'] = len(current_cycle['period'])
+    current_cycle["period_length"] = (get_last_period_entry_in_cycle(current_cycle["period"])["day"] - current_cycle["start_date"]).days +1
 
     data = {
         "num_cycles" : len(cycles),

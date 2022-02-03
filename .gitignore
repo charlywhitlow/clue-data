@@ -1,6 +1,8 @@
 env
 data/ClueBackup*
 output_csv/*
+!output_csv/SampleData_processed_03-02-2022.csv
+output_report/*
+!output_report/SampleData_processed_03-02-2022.pdf
 __pycache__
 */__pycache__
-reports/*

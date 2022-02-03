@@ -248,7 +248,7 @@ class PDF(FPDF):
         temp.close() # delete temp file
         self.ln(5) # 5 to pad gap
 
-def create_report(data):
+def create_report(data, pdf_file_path):
     bar = Bar('Building report...', max=data['num_cycles']+2, suffix='%(percent)d%%')
     pdf = PDF()
     pdf.alias_nb_pages() # replace {nb} value in page numbers
@@ -259,6 +259,5 @@ def create_report(data):
     pdf.add_page()
     bar.next()
     pdf.add_cycle_detail_section(data, bar)
-    output_filepath = f'reports/Clue_Report_{date.today().strftime("%d-%m-%Y")}.pdf'
-    pdf.output(output_filepath, 'F')
-    print(f'\nReport created: {output_filepath}')
+    pdf.output(pdf_file_path, 'F')
+    print(f'\nReport created: {pdf_file_path}')

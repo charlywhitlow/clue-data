@@ -28,7 +28,8 @@ def main(args):
             generate_csv.write_to_csv(data, csv_file_path)
 
             # generate pdf report
-            generate_pdf.create_report(data)
+            pdf_file_path = f'output_report/{Path(file_path).stem}_processed_{date.today().strftime("%d-%m-%Y")}.pdf'
+            generate_pdf.create_report(data, pdf_file_path)
 
         else:
             print(f'Error: File \'{file_path}\' not found')

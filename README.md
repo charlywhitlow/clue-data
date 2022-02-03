@@ -4,9 +4,9 @@ This program takes period data exported from the Clue App, converts it into csv 
 
 ## Sample data
 
-A sample datafile is included, consisting of 9 complete cycles and 1 incomplete cycle: `data/SampleData.cluedata`
+A [sample data file](data/SampleData.cluedata) is included, describing 9 complete cycles and 1 incomplete cycle.
 
-You can also find 1 sample output csv, and 1 sample pdf report, created by running the program on the included data file (see `output_csv` and `output_report` directories)
+You can also find 1 [sample output csv](output_csv/SampleData_processed_03-02-2022.csv), and 1 [sample pdf report](output_report/SampleData_processed_03-02-2022.pdf), created by running the program on the included sample data file.
 
 ## To run
 

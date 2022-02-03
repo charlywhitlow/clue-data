@@ -61,8 +61,7 @@ def extract_cycles(file_path):
         "current_cycle" : current_cycle
     }
 
-    # print result
-    print(f"Data extracted ({len(cycles)} complete cycles plus current cycle)")
+    print(f"Data extracted: {len(cycles)} complete cycles plus current cycle")
 
     return data
 

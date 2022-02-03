@@ -6,6 +6,7 @@ from matplotlib.ticker import (MultipleLocator)
 from datetime import timedelta
 import numpy as np
 from math import ceil
+from progress.bar import Bar
 
 class PDF(FPDF):
 
@@ -117,7 +118,7 @@ class PDF(FPDF):
 
         self.cell(0, 13, "", 0, 1, 'L') # gap
 
-    def add_cycle_detail_section(self, data):
+    def add_cycle_detail_section(self, data, bar):
         self.set_font('Arial', 'B', 14)
         self.cell(0, 10, 'Cycle Detail', 0, 1, 'L')
         self.ln(2)
@@ -130,10 +131,12 @@ class PDF(FPDF):
             data['current_cycle'], x_axis_labels, y_axis_labels, colour, i=data['num_cycles'], 
             average_cycle_length=data['average_cycle_length'], 
             max_cycle_length=data['max_cycle_length'])
+        bar.next()
 
         # add complete cycles
         for i in range(data['num_cycles'], 0, -1):
             self.add_detail_cycle(data["cycles"][i-1], x_axis_labels, y_axis_labels, colour, i)
+            bar.next()
 
     def add_detail_cycle(self, cycle, x_axis_labels, y_axis_labels, colour, i):
 
@@ -246,6 +249,7 @@ class PDF(FPDF):
         self.ln(5) # 5 to pad gap
 
 def create_report(data):
+    bar = Bar('Building report...', max=data['num_cycles']+2, suffix='%(percent)d%%')
     pdf = PDF()
     pdf.alias_nb_pages() # replace {nb} value in page numbers
     pdf.add_page()
@@ -253,7 +257,8 @@ def create_report(data):
     pdf.add_summary_section(data)
     pdf.add_predicted_cycles(data)
     pdf.add_page()
-    pdf.add_cycle_detail_section(data)
+    bar.next()
+    pdf.add_cycle_detail_section(data, bar)
     output_filepath = f'reports/Clue_Report_{date.today().strftime("%d-%m-%Y")}.pdf'
     pdf.output(output_filepath, 'F')
-    print(f'Report created: {output_filepath}')
+    print(f'\nReport created: {output_filepath}')

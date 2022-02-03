@@ -96,7 +96,7 @@ class PDF(FPDF):
 
     def add_predicted_cycles(self, data, n=12):
         predicted_start_dates = [ 
-            (data['current_cycle']['start_date'] + timedelta(days=(i*data['average_cycle_length'])+1)) for i in range(1, n+1) ]
+            (data['current_cycle']['start_date'] + timedelta(days=(i*data['average_cycle_length']))) for i in range(1, n+1) ]
 
         # add titles and border
         self.cell(0, ceil(n/2)*10 + 25, '', 1, 0)

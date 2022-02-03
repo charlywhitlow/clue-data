@@ -235,7 +235,7 @@ class PDF(FPDF):
         ax_line.set_xlim(x_axis_labels[0]-1, x_axis_labels[-1])
         ax_line.tick_params(axis='x', which='both',length=0) # hide all ticks
         ax_line.set_xticklabels([])
-        ax_line.text(average_cycle_length+0.85, 0.75, f'Expected: {average_cycle_length:.1f} days', horizontalalignment='right', color=colour)
+        ax_line.text(average_cycle_length+0.85, 0.75, f'Expected: {predicted_end_date.strftime("%d-%b-%Y")}', horizontalalignment='right', color=colour)
         ax_line.scatter([round(average_cycle_length)], 0.2, s=200, marker="|", color=colour, linewidth=4)
 
         # create temp image file
